@@ -1,2 +1,2 @@
 # DCSTrigger
-Departure control system
+Departure Control System

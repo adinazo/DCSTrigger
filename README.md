@@ -1,3 +1,3 @@
 # DCSTrigger
-Departure Control System
-פיתוח מערכת עדכון והפצת מאפייני הטיסה לפני ההמראה
+Departure Control System    פיתוח מערכת עדכון והפצת מאפייני הטיסה לפני ההמראה 
+    

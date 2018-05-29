@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx6="http://xmlns.example.com/1510729766744" xmlns:pfx7="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:pfx8="http://www.tibco.com/namespaces/tnt/plugins/jms" xmlns:pfx="http://www.elal.co.il/schemas/LIDO/OPS/OutputSchema.xsd" xmlns:pfx9="http://xml.amadeus.com/FEVTPQ_12_2_1A" xmlns:pfx2="http://www.elal.com/Amadeus/bwBasicAmadeus/GetFlightDataService" xmlns:ns="http://www.elal.co.il/schemas/LIDO/OPS/InputSchema.xsd" xmlns:pfx3="http://xmlns.example.com/1510664918591" xmlns:pfx4="http://www.elal.com/Amadeus/Authenticate" xmlns:pfx5="http://www.tibco.com/namespaces/tnt/plugins/file/v2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns0="http://tibco.com/namespaces/tnt/plugins/soap" xmlns:ns2="http://www.tibco.com/schemas/SSMWorkFlow/LYSSM/Schemas/InputSchema.xsd" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://www.tibco.com/schemas/SSMWorkFlow/LYSSM/Schemas/OutputSchema.xsd" xmlns:ns4="http://schemas.datacontract.org/2004/07/FifteenBelow.FlightStatus.FlightTriggerObjects" xmlns:ns3="http://www.tibco.com/pe/EngineTypes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns5="http://www.elal.com/schemas/TargilAdina/Schemas/Schema.xsd" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:pfx11="http://xmlns.example.com/1523772118006" xmlns:pfx12="http://xmlns.example.com/1523770760122" xmlns:pfx10="http://schemas.15below.com/flightTrigger.criteria">
+    <xsd:import namespace="http://www.tibco.com/schemas/SSMWorkFlow/LYSSM/Schemas/OutputSchema.xsd" schemaLocation="/Exe/Schemas/OutputSchema.xsd"/>
+    <xsd:import namespace="http://xml.amadeus.com/FEVTPQ_12_2_1A" schemaLocation="/Schemas/DCS_NotifyDCSEvent_12_2_1A.xsd"/>
+    <wsdl:import namespace="http://xmlns.example.com/1510729766744" location="/WSDL/ContinuingFlights.wsdl"/>
+    <wsdl:import namespace="http://schemas.15below.com/flightTrigger.criteria" location="/WSDL/ly-tst.FlightStatus.svc.wsdl"/>
+    <wsdl:import namespace="http://xmlns.example.com/1523770760122" location="/Processes/WSGetFlightTrigger.wsdl"/>
+    <wsdl:import namespace="http://xmlns.example.com/1523772118006" location="/WSDL/ServiceGetFlightTrigger.wsdl"/>
+    <pd:name>Processes/JMSReceiverDCS.process</pd:name>
+    <pd:startName>JMSQueueReceiver</pd:startName>
+    <pd:startX>0</pd:startX>
+    <pd:startY>0</pd:startY>
+    <pd:returnBindings/>
+    <pd:starter name="JMSQueueReceiver">
+        <pd:type>com.tibco.plugin.jms.JMSQueueEventSource</pd:type>
+        <pd:resourceType>ae.activities.JMSQueueEventSource</pd:resourceType>
+        <pd:x>89</pd:x>
+        <pd:y>86</pd:y>
+        <config>
+            <PermittedMessageType>Text</PermittedMessageType>
+            <SessionAttributes>
+                <transacted>false</transacted>
+                <acknowledgeMode>2</acknowledgeMode>
+                <maxSessions>1</maxSessions>
+                <destination>DCSQueue</destination>
+            </SessionAttributes>
+            <ConfigurableHeaders>
+                <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
+                <JMSExpiration>0</JMSExpiration>
+                <JMSPriority>4</JMSPriority>
+            </ConfigurableHeaders>
+            <ConnectionReference>/Connections/EMS-Connection-1.sharedjmscon</ConnectionReference>
+            <_sequenceKey>1</_sequenceKey>
+            <_customId>1</_customId>
+        </config>
+        <pd:inputBindings/>
+    </pd:starter>
+    <pd:endName>End</pd:endName>
+    <pd:endX>1070</pd:endX>
+    <pd:endY>351</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1510479777897</pd:targetNamespace>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>454</pd:x>
+        <pd:y>352</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="errorLog">
+        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+        <pd:resourceType>ae.activities.log</pd:resourceType>
+        <pd:x>726</pd:x>
+        <pd:y>351</pd:y>
+        <config>
+            <role>Erro</role>
+        </config>
+        <pd:inputBindings>
+            <pfx7:ActivityInput>
+                <message>
+                    <xsl:value-of select="$_error/ns3:ErrorReport/StackTrace"/>
+                </message>
+                <xsl:if test="$_error/ns3:ErrorReport/MsgCode">
+                    <msgCode>
+                        <xsl:value-of select="$_error/ns3:ErrorReport/MsgCode"/>
+                    </msgCode>
+                </xsl:if>
+            </pfx7:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Confirm">
+        <pd:type>com.tibco.pe.core.ConfirmActivity</pd:type>
+        <pd:resourceType>activity.confirm</pd:resourceType>
+        <pd:x>1066</pd:x>
+        <pd:y>226</pd:y>
+        <config>
+            <ConfirmEvent>JMSQueueReceiver</ConfirmEvent>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="ParseMsg">
+        <pd:type>com.tibco.plugin.xml.XMLParseActivity</pd:type>
+        <pd:resourceType>ae.activities.XMLParseActivity</pd:resourceType>
+        <pd:x>230</pd:x>
+        <pd:y>87</pd:y>
+        <config>
+            <inputStyle>text</inputStyle>
+            <xsdVersion>default</xsdVersion>
+            <validateOutput>true</validateOutput>
+            <term ref="pfx9:DCS_NotifyDCSEvent"/>
+        </config>
+        <pd:inputBindings>
+            <xmlString>
+                <xsl:value-of select="$JMSQueueReceiver/pfx8:ActivityOutput/Body"/>
+            </xmlString>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="DCS_Triggers">
+        <pd:type>com.tibco.plugin.jdbc.JDBCQueryActivity</pd:type>
+        <pd:resourceType>ae.activities.JDBCQueryActivity</pd:resourceType>
+        <pd:x>352</pd:x>
+        <pd:y>87</pd:y>
+        <config>
+            <timeout>10</timeout>
+            <commit>false</commit>
+            <maxRows>100</maxRows>
+            <emptyStrAsNil>false</emptyStrAsNil>
+            <jdbcSharedConfig>/Connections/TibcoControl (2).sharedjdbc</jdbcSharedConfig>
+            <statement>SELECT TOP 1000 [id]
+      ,[triggerCode]
+      ,[triggerDescription]
+  FROM [TIBCO_Control].[dbo].[DCS_Triggers]
+  where [triggerCode]=?</statement>
+            <Prepared_Param_DataType>
+                <parameter>
+                    <parameterName>TriggerCode</parameterName>
+                    <dataType>VARCHAR</dataType>
+                </parameter>
+            </Prepared_Param_DataType>
+            <oraObjects/>
+            <oraTables/>
+            <QueryOutputCachedSchemaColumns>id</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>4</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>int identity</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            <QueryOutputCachedSchemaColumns>triggerCode</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>1</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>char</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            <QueryOutputCachedSchemaColumns>triggerDescription</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>12</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>varchar</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+        </config>
+        <pd:inputBindings>
+            <jdbcQueryActivityInput>
+                <TriggerCode>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightEventsInformation[1]/pfx9:eventCode/pfx9:attributeDetails/pfx9:attributeType"/>
+                </TriggerCode>
+            </jdbcQueryActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="ApplicationsByTrigger">
+        <pd:type>com.tibco.plugin.jdbc.JDBCQueryActivity</pd:type>
+        <pd:resourceType>ae.activities.JDBCQueryActivity</pd:resourceType>
+        <pd:x>496</pd:x>
+        <pd:y>87</pd:y>
+        <config>
+            <timeout>10</timeout>
+            <commit>false</commit>
+            <maxRows>100</maxRows>
+            <emptyStrAsNil>false</emptyStrAsNil>
+            <jdbcSharedConfig>/Connections/TibcoControl (2).sharedjdbc</jdbcSharedConfig>
+            <statement>SELECT TOP 1000 [id]
+      ,[IdDCSTrigger]
+      ,[applicationCode]
+      ,[serviceURL]
+  FROM [TIBCO_Control].[dbo].[ApplicationsByTrigger]
+where IdDCSTrigger = ?</statement>
+            <Prepared_Param_DataType>
+                <parameter>
+                    <parameterName>id</parameterName>
+                    <dataType>VARCHAR</dataType>
+                </parameter>
+            </Prepared_Param_DataType>
+            <wizardData/>
+            <oraObjects/>
+            <oraTables/>
+            <QueryOutputCachedSchemaColumns>id</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>4</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>int identity</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            <QueryOutputCachedSchemaColumns>IdDCSTrigger</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>4</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>int</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            <QueryOutputCachedSchemaColumns>applicationCode</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>4</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>int</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            <QueryOutputCachedSchemaColumns>serviceURL</QueryOutputCachedSchemaColumns>
+            <QueryOutputCachedSchemaDataTypes>12</QueryOutputCachedSchemaDataTypes>
+            <QueryOutputCachedSchemaDataTypesName>varchar</QueryOutputCachedSchemaDataTypesName>
+            <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+        </config>
+        <pd:inputBindings>
+            <jdbcQueryActivityInput>
+                <id>
+                    <xsl:choose>
+                        <xsl:when test="exists($DCS_Triggers/resultSet/Record[1]/id)">
+                            <xsl:value-of select="$DCS_Triggers/resultSet/Record[1]/id"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:attribute name="xsi:nil">true</xsl:attribute>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </id>
+            </jdbcQueryActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="appCodes">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>587</pd:x>
+        <pd:y>3</pd:y>
+        <pd:width>194</pd:width>
+        <pd:height>155</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$ApplicationsByTrigger/resultSet/Record</pd:over>
+            <pd:iterationElementSlot>appCode</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:outSlot>k</pd:outSlot>
+            <pd:activityOutputName>ApplicationsList</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>ApplicationsList</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ApplicationsList</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="ApplicationsList">
+            <pd:type>com.tibco.plugin.jdbc.JDBCQueryActivity</pd:type>
+            <pd:resourceType>ae.activities.JDBCQueryActivity</pd:resourceType>
+            <pd:x>686</pd:x>
+            <pd:y>89</pd:y>
+            <config>
+                <timeout>10</timeout>
+                <commit>false</commit>
+                <maxRows>100</maxRows>
+                <emptyStrAsNil>false</emptyStrAsNil>
+                <jdbcSharedConfig>/Connections/TibcoControl (2).sharedjdbc</jdbcSharedConfig>
+                <statement>SELECT TOP 1000 [applicationCode]
+      ,[applicationName]
+      ,[applicationEmail]
+  FROM [TIBCO_Control].[dbo].[ApplicationsList]
+where applicationCode = ?</statement>
+                <Prepared_Param_DataType>
+                    <parameter>
+                        <parameterName>idApplication</parameterName>
+                        <dataType>VARCHAR</dataType>
+                    </parameter>
+                </Prepared_Param_DataType>
+                <oraObjects/>
+                <oraTables/>
+                <QueryOutputCachedSchemaColumns>applicationCode</QueryOutputCachedSchemaColumns>
+                <QueryOutputCachedSchemaDataTypes>4</QueryOutputCachedSchemaDataTypes>
+                <QueryOutputCachedSchemaDataTypesName>int identity</QueryOutputCachedSchemaDataTypesName>
+                <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+                <QueryOutputCachedSchemaColumns>applicationName</QueryOutputCachedSchemaColumns>
+                <QueryOutputCachedSchemaDataTypes>12</QueryOutputCachedSchemaDataTypes>
+                <QueryOutputCachedSchemaDataTypesName>varchar</QueryOutputCachedSchemaDataTypesName>
+                <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+                <QueryOutputCachedSchemaColumns>applicationEmail</QueryOutputCachedSchemaColumns>
+                <QueryOutputCachedSchemaDataTypes>12</QueryOutputCachedSchemaDataTypes>
+                <QueryOutputCachedSchemaDataTypesName>varchar</QueryOutputCachedSchemaDataTypesName>
+                <QueryOutputCachedSchemaStatus>RequiredElement</QueryOutputCachedSchemaStatus>
+            </config>
+            <pd:inputBindings>
+                <jdbcQueryActivityInput>
+                    <idApplication>
+                        <xsl:value-of select="$appCode/Record/applicationCode"/>
+                    </idApplication>
+                </jdbcQueryActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Mail">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>588</pd:x>
+        <pd:y>352</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="mails" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="mail" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each select="$k/AccumulatedOutput/resultSet">
+                    <xsl:for-each select="Record">
+                        <mails>
+                            <mail>
+                                <xsl:value-of select="applicationEmail"/>
+                            </mail>
+                        </mails>
+                    </xsl:for-each>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="InputService">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>235</pd:x>
+        <pd:y>236</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="carrierCode" type="xsd:string"/>
+                            <xsd:element name="flightNum" type="xsd:string"/>
+                            <xsd:element name="boardPoint" type="xsd:string"/>
+                            <xsd:element name="offPoint" type="xsd:string"/>
+                            <xsd:element name="flightDateTime_Local" type="xsd:dateTime" minOccurs="0"/>
+                            <xsd:element name="flightDateTime_UTC" type="xsd:dateTime" minOccurs="0"/>
+                            <xsd:element name="EventCode" type="xsd:string"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <carrierCode>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightDetails/pfx9:carrierDetails/pfx9:operatingCarrier"/>
+                </carrierCode>
+                <flightNum>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightDetails/pfx9:flightDetails/pfx9:flightNumber"/>
+                </flightNum>
+                <boardPoint>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightDetails/pfx9:boardPoint"/>
+                </boardPoint>
+                <offPoint>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightDetails/pfx9:offPoint"/>
+                </offPoint>
+                <xsl:for-each select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightOrLegDepartureDate[1]">
+                    <flightDateTime_Local>
+                        <xsl:value-of select="tib:create-dateTime(current()/pfx9:dateTime/pfx9:year, current()/pfx9:dateTime/pfx9:month, current()/pfx9:dateTime/pfx9:day, current()/pfx9:dateTime/pfx9:hour, current()/pfx9:dateTime/pfx9:minutes, 00)"/>
+                    </flightDateTime_Local>
+                </xsl:for-each>
+                <xsl:for-each select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightOrLegDepartureDate[2]">
+                    <flightDateTime_UTC>
+                        <xsl:value-of select="tib:create-dateTime(current()/pfx9:dateTime/pfx9:year, current()/pfx9:dateTime/pfx9:month, current()/pfx9:dateTime/pfx9:day, current()/pfx9:dateTime/pfx9:hour, current()/pfx9:dateTime/pfx9:minutes, 00)"/>
+                    </flightDateTime_UTC>
+                </xsl:for-each>
+                <EventCode>
+                    <xsl:value-of select="$ParseMsg/pfx9:DCS_NotifyDCSEvent/pfx9:flightEventsInformation[1]/pfx9:eventCode/pfx9:attributeDetails/pfx9:attributeType"/>
+                </EventCode>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="15below">
+        <pd:type>com.tibco.plugin.soap.SOAPSendReceiveActivity</pd:type>
+        <pd:resourceType>ae.activities.SOAPSendReceiveUI</pd:resourceType>
+        <pd:x>1130</pd:x>
+        <pd:y>95</pd:y>
+        <config>
+            <timeout>0</timeout>
+            <soapAttachmentStyle>SwA</soapAttachmentStyle>
+            <timeoutType>Seconds</timeoutType>
+            <service>pfx10:FlightStatus</service>
+            <servicePort>FlightStatusHttps</servicePort>
+            <operation>NewFlightTrigger</operation>
+            <soapAction>http://schemas.15below.com/flightTrigger.criteria/IFlightStatus/NewFlightTrigger</soapAction>
+            <endpointURL>https://ly-tst-flightstatus-api.pasngr.com/v2_0_0/FlightStatus.svc</endpointURL>
+            <authScheme>NONE</authScheme>
+        </config>
+        <pd:inputBindings>
+            <inputMessage>
+                <pfx10:NewFlightTrigger>
+                    <pfx10:flightStatus>
+                        <ns4:ChangeDetail>
+                            <ns4:ChangeEvent>
+                                <xsl:value-of select="$InputService/root/EventCode"/>
+                            </ns4:ChangeEvent>
+                        </ns4:ChangeDetail>
+                        <ns4:FlightInformation>
+                            <ns4:CarrierCode>
+                                <xsl:value-of select="$InputService/root/carrierCode"/>
+                            </ns4:CarrierCode>
+                            <ns4:DepartureDate>
+                                <xsl:value-of select="$InputService/root/flightDateTime_UTC"/>
+                            </ns4:DepartureDate>
+                            <ns4:FlightLegs>
+                                <ns4:FSFlightLeg>
+                                    <ns4:FSFlightArrival/>
+                                    <ns4:FSFlightDeparture/>
+                                    <ns4:FSFlightLegState/>
+                                    <ns4:FlightLeg>
+                                        <xsl:value-of select="1"/>
+                                    </ns4:FlightLeg>
+                                </ns4:FSFlightLeg>
+                            </ns4:FlightLegs>
+                            <ns4:FlightNumber>
+                                <xsl:value-of select="$InputService/root/flightNum"/>
+                            </ns4:FlightNumber>
+                        </ns4:FlightInformation>
+                    </pfx10:flightStatus>
+                </pfx10:NewFlightTrigger>
+            </inputMessage>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Confirm-1">
+        <pd:type>com.tibco.pe.core.ConfirmActivity</pd:type>
+        <pd:resourceType>activity.confirm</pd:resourceType>
+        <pd:x>867</pd:x>
+        <pd:y>352</pd:y>
+        <config>
+            <ConfirmEvent>JMSQueueReceiver</ConfirmEvent>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:group name="urls">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>860</pd:x>
+        <pd:y>8</pd:y>
+        <pd:width>146</pd:width>
+        <pd:height>146</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$ApplicationsByTrigger/resultSet/Record/serviceURL</pd:over>
+            <pd:iterationElementSlot>url</pd:iterationElementSlot>
+            <pd:indexSlot>j</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>tryService</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>tryService</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="tryService">
+            <pd:type>com.tibco.plugin.soap.SOAPSendReceiveActivity</pd:type>
+            <pd:resourceType>ae.activities.SOAPSendReceiveUI</pd:resourceType>
+            <pd:x>932</pd:x>
+            <pd:y>84</pd:y>
+            <config>
+                <timeout>0</timeout>
+                <soapAttachmentStyle>SwA</soapAttachmentStyle>
+                <timeoutType>Seconds</timeoutType>
+                <service>pfx11:ServiceGetFlightTrigger</service>
+                <servicePort>PortTypeEndpoint1</servicePort>
+                <operation>GetFlightTrigger</operation>
+                <soapAction>/Processes/Service.serviceagent/PortTypeEndpoint1/GetFlightTrigger</soapAction>
+                <endpointURL>http://tibco-t:2377/Processes/Service.serviceagent/PortTypeEndpoint1</endpointURL>
+                <authScheme>NONE</authScheme>
+                <useProxy>false</useProxy>
+                <requireBasicAuth>false</requireBasicAuth>
+                <basicHttpAuthIdentity/>
+            </config>
+            <pd:inputBindings>
+                <inputMessage>
+                    <ns5:Request>
+                        <ns5:carrierCode>
+                            <xsl:value-of select="$InputService/root/carrierCode"/>
+                        </ns5:carrierCode>
+                        <ns5:flightNum>
+                            <xsl:value-of select="$InputService/root/flightNum"/>
+                        </ns5:flightNum>
+                        <ns5:boardPoint>
+                            <xsl:value-of select="$InputService/root/boardPoint"/>
+                        </ns5:boardPoint>
+                        <ns5:offPoint>
+                            <xsl:value-of select="$InputService/root/offPoint"/>
+                        </ns5:offPoint>
+                        <ns5:flightDateTime_Local>
+                            <xsl:value-of select="$InputService/root/flightDateTime_Local"/>
+                        </ns5:flightDateTime_Local>
+                        <ns5:flightDateTime_UTC>
+                            <xsl:value-of select="$InputService/root/flightDateTime_UTC"/>
+                        </ns5:flightDateTime_UTC>
+                        <ns5:EventCode>
+                            <xsl:value-of select="$InputService/root/EventCode"/>
+                        </ns5:EventCode>
+                    </ns5:Request>
+                    <ns0:_configData>
+                        <endpointURL>
+                            <xsl:value-of select="$url/serviceURL"/>
+                        </endpointURL>
+                    </ns0:_configData>
+                </inputMessage>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Call Process">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>491</pd:x>
+        <pd:y>229</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>JMSQueueReceiver</pd:from>
+        <pd:to>ParseMsg</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ParseMsg</pd:from>
+        <pd:to>InputService</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ApplicationsByTrigger</pd:from>
+        <pd:to>appCodes</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>Mail</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Mail</pd:from>
+        <pd:to>errorLog</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>InputService</pd:from>
+        <pd:to>DCS_Triggers</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Confirm</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>errorLog</pd:from>
+        <pd:to>Confirm-1</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Confirm-1</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>DCS_Triggers</pd:from>
+        <pd:to>ApplicationsByTrigger</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>urls</pd:from>
+        <pd:to>Confirm</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>appCodes</pd:from>
+        <pd:to>urls</pd:to>
+        <pd:xpathDescription>FCR</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$InputService/root/EventCode='FCR'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>appCodes</pd:from>
+        <pd:to>Confirm</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>appCodes</pd:from>
+        <pd:to>Call Process</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Call Process</pd:from>
+        <pd:to>Confirm</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>
